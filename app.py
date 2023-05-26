@@ -1,8 +1,11 @@
-import gymnasium as gym
+import gym
 import numpy as np
+from utils.logger import logger
+from tqdm import tqdm
 
-env = gym.make("MountainCar-v0", render_mode="human")
-env.reset()
+env = gym.make("MountainCar-v0")
+
+log = logger(env)
 # print("_____OBSERVATION SPACE_____ \n")
 # print("Observation Space", env.observation_space)
 # print("Sample observation", env.observation_space.sample()) # Get a random observation
@@ -14,18 +17,64 @@ env.reset()
 # print("Action Space Shape", env.action_space.n)
 # print("Action Space Sample", env.action_space.sample()) # Take a random action
 
-discrete_obs_size = [20] * len(env.observation_space.high) # Create a list of 20s with the length of the observation space
-# print("discrete_os_size:", discrete_obs_size)
-discrete_obs_win_size = (env.observation_space.high - env.observation_space.low) / discrete_obs_size # 
-# print("discrete_obs_win_size:", discrete_obs_win_size)
+log.print_observation_space()
+log.print_action_space()
 
-q_table = np.random.uniform(low=-2, high=0, size=(discrete_obs_size + [env.action_space.n]))
+
+# Hyperparameters
+LEARNING_RATE = 0.1
+DISCOUNT = 0.95 # How important are future actions compared to current actions
+EPISODE= 25000 # How many times we are going to run the environment
+
+EPSILON = 0.5
+START_EPSILON_DECAYING = 1
+END_EPSILON_DECAYING = EPISODE // 2
+EPSILON_DECAYING_VALUE = EPSILON / (END_EPSILON_DECAYING - START_EPSILON_DECAYING)
+
+SHOW_EVERY = 2000 # How often we are going to render the environment
+
+DISCRETE_OBS_SIZE = [20] * len(env.observation_space.high) # Create a list of 20s with the length of the observation space
+DISCRETE_OBS_WIN_SIZE = (env.observation_space.high - env.observation_space.low) / DISCRETE_OBS_SIZE
+
+
+q_table = np.random.uniform(low=-2, high=0, size=(DISCRETE_OBS_SIZE + [env.action_space.n]))
 print(q_table.shape)
 
-done = False
+def get_discrete_state(state):
+    '''
+    We need to reference state[0] because env.reset() returns something like "(array([-0.5732655,  0.       ], dtype=float32), {})."
+    We only want the array."
+    '''
+    discrete_state = (state - env.observation_space.low) / DISCRETE_OBS_WIN_SIZE
+    return tuple(discrete_state.astype(int))
 
-while not done:
-    action = 2
-    new_state, reward, done, _, _ = env.step(action)
-    
+for episode in tqdm(range(EPISODE)):
+    if episode % SHOW_EVERY == 0:
+        print(episode)
+        render = True
+    else:
+        render = False
+    discrete_state = get_discrete_state(env.reset())
+    done = False
+    while not done:
+        if np.random.random() > EPSILON:
+            action = np.argmax(q_table[discrete_state])
+        else:
+            action = np.random.randint(0, env.action_space.n)
+        new_state, reward, done, _ = env.step(action)
+        new_discrete_state = get_discrete_state(new_state)
+        if render:
+            env.render(mode="human")
+        if not done:
+            max_future_q = np.max(q_table[new_discrete_state])
+            current_q = q_table[discrete_state + (action, )]
+            new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+            q_table[discrete_state + (action, )] = new_q
+        elif new_state[0] >= env.goal_position:
+            print(f"We made it on episode {episode}")
+            q_table[discrete_state + (action, )] = 0
+        
+        discrete_state = new_discrete_state
+    if END_EPSILON_DECAYING >= episode >= START_EPSILON_DECAYING:
+        EPSILON -= EPSILON_DECAYING_VALUE
 env.close()
