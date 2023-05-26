@@ -1,5 +1,8 @@
 import gym
 import numpy as np
+import matplotlib.pyplot as plt
+import random
+
 from utils.logger import logger
 from tqdm import tqdm
 
@@ -24,18 +27,20 @@ log.print_action_space()
 # Hyperparameters
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95 # How important are future actions compared to current actions
-EPISODE= 25000 # How many times we are going to run the environment
+EPISODE= 2000 # How many times we are going to run the environment
+
+SHOW_EVERY = 500 # How often we are going to render the environment
 
 EPSILON = 0.5
 START_EPSILON_DECAYING = 1
 END_EPSILON_DECAYING = EPISODE // 2
 EPSILON_DECAYING_VALUE = EPSILON / (END_EPSILON_DECAYING - START_EPSILON_DECAYING)
 
-SHOW_EVERY = 2000 # How often we are going to render the environment
-
 DISCRETE_OBS_SIZE = [20] * len(env.observation_space.high) # Create a list of 20s with the length of the observation space
 DISCRETE_OBS_WIN_SIZE = (env.observation_space.high - env.observation_space.low) / DISCRETE_OBS_SIZE
 
+ep_rewards = []
+aggr_ep_rewards = {'ep':[], 'avg':[], 'min':[], 'max':[]} # Aggregate episode rewards for tracking performance
 
 q_table = np.random.uniform(low=-2, high=0, size=(DISCRETE_OBS_SIZE + [env.action_space.n]))
 print(q_table.shape)
@@ -49,6 +54,7 @@ def get_discrete_state(state):
     return tuple(discrete_state.astype(int))
 
 for episode in tqdm(range(EPISODE)):
+    episode_reward = 0
     if episode % SHOW_EVERY == 0:
         print(episode)
         render = True
@@ -62,6 +68,7 @@ for episode in tqdm(range(EPISODE)):
         else:
             action = np.random.randint(0, env.action_space.n)
         new_state, reward, done, _ = env.step(action)
+        episode_reward += reward
         new_discrete_state = get_discrete_state(new_state)
         if render:
             env.render(mode="human")
@@ -77,4 +84,21 @@ for episode in tqdm(range(EPISODE)):
         discrete_state = new_discrete_state
     if END_EPSILON_DECAYING >= episode >= START_EPSILON_DECAYING:
         EPSILON -= EPSILON_DECAYING_VALUE
+        
+    ep_rewards.append(episode_reward)
+    
+    if not episode % SHOW_EVERY: # When episode is rendered
+        average_reward = sum(ep_rewards[-SHOW_EVERY:]) / len(ep_rewards[-SHOW_EVERY:])
+        aggr_ep_rewards['ep'].append(episode)
+        aggr_ep_rewards['avg'].append(average_reward)
+        aggr_ep_rewards['min'].append(min(ep_rewards[-SHOW_EVERY:]))
+        aggr_ep_rewards['max'].append(max(ep_rewards[-SHOW_EVERY:]))
+        # Current episode, average reward, min reward, max reward
+        print(f"Episode: {episode} avg: {average_reward} min: {min(ep_rewards[-SHOW_EVERY:])} max:{max(ep_rewards[-SHOW_EVERY:])}")
 env.close()
+
+plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['avg'], label="avg")
+plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['min'], label="min")
+plt.plot(aggr_ep_rewards['ep'], aggr_ep_rewards['max'], label="max")
+plt.legend(loc=4) # 4 is the lower right corner
+plt.show()
