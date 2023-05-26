@@ -1,7 +1,6 @@
 import gym
 import numpy as np
 import matplotlib.pyplot as plt
-import random
 
 from utils.logger import logger
 from tqdm import tqdm
