@@ -44,7 +44,13 @@ class Blob:
     def __sub__(self, other) -> str:
         return self.x - other.x, self.y - other.y
 
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
     def action(self, choice):  # can only move diagonally
+        '''
+        Gives us 9 total movement options. (0,1,2,3,4,5,6,7,8)
+        '''
         if choice == 0:
             self.move(x=1, y=1)
         elif choice == 1:
@@ -53,6 +59,19 @@ class Blob:
             self.move(x=-1, y=1)
         elif choice == 3:
             self.move(x=1, y=-1)
+
+        elif choice == 4:
+            self.move(x=1, y=0)
+        elif choice == 5:
+            self.move(x=-1, y=0)
+
+        elif choice == 6:
+            self.move(x=0, y=1)
+        elif choice == 7:
+            self.move(x=0, y=-1)
+
+        elif choice == 8:
+            self.move(x=0, y=0)  # Don't move
 
     def move(self, x=False, y=False):
         if not x:
@@ -144,7 +163,7 @@ for episode in tqdm(range(EPISODE)):
             env[enemy.x][enemy.y] = d[ENEMY_N]
 
             img = Image.fromarray(env, "RGB")
-            img = img.resize((300, 300))
+            img = img.resize((500, 500))
             cv2.imshow("image", np.array(img))
             if reward == FOOD_REWARD or reward == -ENEMY_PENALTY:
                 # 500 ms refresh to see if we hit the enemy of goof
