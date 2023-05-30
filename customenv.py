@@ -10,7 +10,7 @@ import time
 
 style.use("ggplot")
 
-SIZE = 10
+SIZE = 4
 EPISODE = 25000
 MOVE_PENALTY = 1
 ENEMY_PENALTY = 300
@@ -105,7 +105,9 @@ else:
     with open(q_table, "rb") as f:
         q_table = pickle.load(f)
 
+
 episode_rewards = []
+print("q_table shape: ", q_table)
 
 for episode in tqdm(range(EPISODE)):
     player = Blob()
