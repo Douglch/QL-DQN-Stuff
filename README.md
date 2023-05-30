@@ -4,4 +4,4 @@ Just following a tutorial from [sentdex's reinforcement learning](https://www.yo
 
 ## Usage
 
-Simply run `python3 main.py` to run the program. You can change the parameters in the `main.py` file to change the number of episodes, the learning rate, and the discount factor. You can also change the `render` variable to `True` to render the window.
+Simply run any of the  `.py` to run the program. You can change the parameters in the `main.py` file to change the number of episodes, the learning rate, and the discount factor. You can also change the `render` variable to `True` to render the window.
