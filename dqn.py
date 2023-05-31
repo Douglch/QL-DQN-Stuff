@@ -3,15 +3,16 @@ from keras.layers import Dense, Dropout, Conv2D, MaxPooling2D, Activation, Flatt
 from keras.callbacks import TensorBoard
 from keras.optimizers import Adam
 from collections import deque
-from customenv import Blob
 from tqdm import tqdm
 import time
 import random
 import os
 import cv2
 import tensorflow as tf
-import np as np
-import Image
+import numpy as np
+from PIL import Image
+
+from customenv import Blob
 
 
 DISCOUNT = 0.99
@@ -34,7 +35,7 @@ MIN_EPSILON = 0.001
 
 #  Stats settings
 AGGREGATE_STATS_EVERY = 50  # episodes
-SHOW_PREVIEW = False
+SHOW_PREVIEW = True
 
 
 class BlobEnv:
@@ -128,7 +129,7 @@ ep_rewards = [-200]
 # For more repetitive results
 random.seed(1)
 np.random.seed(1)
-tf.set_random_seed(1)
+tf.random.set_seed(1)
 
 # Memory fraction, used mostly when trai8ning multiple agents
 # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=MEMORY_FRACTION)
@@ -145,7 +146,7 @@ class ModifiedTensorBoard(TensorBoard):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.step = 1
-        self.writer = tf.summary.FileWriter(self.log_dir)
+        self.writer = tf.summary.create_file_writer('log_dir')
 
     # Overriding this method to stop creating default log writer
     def set_model(self, model):

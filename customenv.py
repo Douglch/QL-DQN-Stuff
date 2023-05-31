@@ -107,7 +107,7 @@ else:
 
 
 episode_rewards = []
-print("q_table shape: ", q_table)
+# print("q_table shape: ", q_table)
 
 for episode in tqdm(range(EPISODE)):
     player = Blob()
